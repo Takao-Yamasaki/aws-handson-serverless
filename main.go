@@ -4,36 +4,45 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log/slog"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/translate"
 )
 
-type MyEvent struct {
-	Key1 string `json:"key1"`
-	Key2 string `json:"key2"`
-	Key3 string `json:"key3"`
-}
-
-func HandleRequest(ctx context.Context, event *MyEvent) (*string, error) {
-	if event == nil {
-		return nil, fmt.Errorf("received nil event")
-	}
-
-	// JSON形式でエンコード
-	eventBytes, err := json.Marshal(event)
+func LamdaHandler(ctx context.Context) (*string, error) {
+	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error loading AWS SDK config: %e", err)
 	}
 
-	// slogを使ってログ出力
-	slog.Info(string(eventBytes))
-	message := "Hello from Lamda"
-	return &message, nil
+	client := translate.NewFromConfig(cfg)
+
+	inputText := "おはよう"
+
+	JA := "ja"
+	EN := "en"
+
+	// リクエストを作成
+	request := translate.TranslateTextInput{
+		SourceLanguageCode: &JA,
+		TargetLanguageCode: &EN,
+		Text:               &inputText,
+	}
+
+	// レスポンスを格納
+	response, err := client.TranslateText(context.Background(), &request)
+	if err != nil {
+		return nil, fmt.Errorf("error translating text: %e", err)
+	}
+
+	// 翻訳結果を格納
+	outputText := response.TranslatedText
+
+	return outputText, nil
 }
 
 func main() {
-	lambda.Start(HandleRequest)
+	lambda.Start(LamdaHandler)
 }
