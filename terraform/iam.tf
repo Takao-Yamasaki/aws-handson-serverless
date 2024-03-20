@@ -41,3 +41,9 @@ resource "aws_iam_role_policy" "aws_handson_serverless_lamda" {
   }
   EOF
 }
+
+// TranslateFullAccessをアタッチ
+resource "aws_iam_role_policy_attachment" "aws_handson_serverless_lamda" {
+  role = aws_iam_role.aws_handson_serverless_lamda.name
+  policy_arn =  "arn:aws:iam::aws:policy/TranslateFullAccess"
+}
